@@ -1,6 +1,6 @@
 classdef VernierDictionary
 
-properties
+properties (Constant)
 %*******************************
 % Constants from "GVernierUSB.h"
 %*******************************

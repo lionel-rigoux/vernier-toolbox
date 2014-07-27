@@ -58,7 +58,7 @@ classdef dynamometer < handle
         % uninit the GoIO library
         % -----------------------------------------------------------------
         function uninit_GoIO(dy)
-            calllib('GoIO_DLL','GoIO_Uninit');
+            try calllib('GoIO_DLL','GoIO_Uninit'); end
         end
         
         % connect to the sensor
