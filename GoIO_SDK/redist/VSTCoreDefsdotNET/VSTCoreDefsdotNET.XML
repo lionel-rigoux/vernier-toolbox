@@ -1,0 +1,147 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>VSTCoreDefsdotNET</name>
+    </assembly>
+    <members>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_Linear">
+            <summary>
+            linear, y = bx + a
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_Quadratic">
+            <summary>
+            y = cx^2 + bx + a
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_Power">
+            <summary>
+            y = a * x^b
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_ModifiedPower">
+            <summary>
+            y = a * b^x
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_Logarithmic">
+            <summary>
+            y = a + b * ln(x)
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_ModifiedLogarithmic">
+            <summary>
+            y = a + b * ln(1/x
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_Exponential">
+            <summary>
+            y = a * e^(b * x)
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_ModifiedExponential">
+            <summary>
+            y = a * e^(b / x)
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_Geometric">
+            <summary>
+            y = a * x^(b * x)
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_ModifiedGeometric">
+            <summary>
+            y = a * x^(b / x)
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_ReciprocalLog">
+            <summary>
+            y = 1 / (a + b * ln(c * x))
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.kEquationType_SteinhartHart">
+            <summary>
+            y = 1 / (a + b * ln(1000*x) + c * (ln(1000*x)^3) )
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.SensorNumber">
+            <summary>
+            Identifies type of sensor; (SensorNumber >= 20) generally implies that
+            SensorDDSRec is stored on the sensor hardware. Such sensors are called 'smart'.
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.SensorSerialNumber">
+            <summary>
+            [0][1][2] - serial number as 3-byte integer, Little-Endian (LSB first).
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.SensorLotCode">
+            <summary>
+            Lot code as 2-byte BCD date, [0] = YY, [1] == WW.
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.SignificantFigures">
+            <summary>
+            Ignore this field - it is only properly understood by legacy TI calculators.
+            <para>
+            GSensorDDSRec.SignificantFigures is not a reliable indicator of how many significant digits 
+            of a measurement to display.
+            </para>
+            <para>
+            An alternative criterion for determining this is the fact that for kProbeTypeAnalog5V
+            sensors, the least significant bit of the analog to digital converter used to take measurements
+            corresponds to a voltage measurement of 5.0/4096 = 0.00122 volts. Thus voltage measurements for 
+            kProbeTypeAnalog5V sensors are accurate to within about 0.00122 volts.
+            </para>
+            <para>
+            Note that almost all analog sensors are of type kProbeTypeAnalog5V.
+            </para>
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.CurrentRequirement">
+            <summary>
+            Number of mA(average) required to power sensor.
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.MinSamplePeriod">
+            <summary>
+            seconds
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.TypSamplePeriod">
+            <summary>
+            seconds
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.WarmUpTime">
+            <summary>
+            Time (in seconds) required for the sensor to have power before reaching equilibrium.
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.OperationType">
+            <summary>
+            OperationType is used to infer probe type(analog 5 volt or 10 volt).
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.CalibrationEquation">
+            <summary>
+            kEquationType_...
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.HighestValidCalPageIndex">
+            <summary>
+            First index is 0. May range from 0 to 2.
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VSTSensorDDSMemRec.Checksum">
+            <summary>
+            Result of XORing bytes 0-126.
+            </summary>
+        </member>
+        <member name="F:VSTCoreDefsdotNET.VST_USB_defs.VENDOR_ID">
+            <summary>
+            Vernier Software and Technology USB vendor id
+            </summary>
+        </member>
+    </members>
+</doc>
