@@ -202,8 +202,31 @@ classdef dynamometer < handle
     end
     
     %% ====================================================================
-    % Private methods
+    % Static methods
+    %  ====================================================================
+    methods (Access = public, Hidden = false, Static=true)
+        function num_devices=count_dyn(action)
+            persistent number_devices ;
+            if isempty(number_devices)
+                number_devices=0;
+            end
+            
+            if exist('action')
+                switch action
+                    case 'add'
+                        number_devices=number_devices+1;
+                    case 'rem'
+                        number_devices=number_devices-1;
+                end
+            end
+            num_devices=number_devices;
+        end
+        
+    end
+    
     %% ====================================================================
+    % Private methods
+    %  ====================================================================
     methods (Access = private, Hidden = true)
         
         
@@ -246,12 +269,12 @@ classdef dynamometer < handle
         
         % connect to the sensor
         % -----------------------------------------------------------------
-        function connect_sensor(dy)
+        function connect_sensor(dy,sensor_num)
             
             % find device name
             GoIOnumSkips = calllib('GoIO_DLL','GoIO_UpdateListOfAvailableDevices', ...
                 dy.VERNIER_DEFAULT_VENDOR_ID, dy.SKIP_DEFAULT_PRODUCT_ID);
-            if GoIOnumSkips < 1
+            if GoIOnumSkips < sensor_num
                 error('*** No GoLink connected!');
             end
             fprintf('Found %d GoLink(s)\n',GoIOnumSkips);
@@ -261,7 +284,7 @@ classdef dynamometer < handle
             [retValue, GoIOdeviceName] = calllib('GoIO_DLL','GoIO_GetNthAvailableDeviceName', ...
                 blanks(dy.GOIO_MAX_SIZE_DEVICE_NAME), dy.GOIO_MAX_SIZE_DEVICE_NAME, ...
                 dy.VERNIER_DEFAULT_VENDOR_ID, dy.SKIP_DEFAULT_PRODUCT_ID, ...
-                0); % <- the last paramter is the device number
+                sensor_num-1); % <- the last paramter is the device number
             if retValue == -1
                 error('*** Could not identify the device.');
             end
@@ -271,7 +294,7 @@ classdef dynamometer < handle
             [dy.GoIOhDevice] = calllib('GoIO_DLL','GoIO_Sensor_Open',GoIOdeviceName, ...
                 dy.VERNIER_DEFAULT_VENDOR_ID, dy.SKIP_DEFAULT_PRODUCT_ID, 0);
             if isNull(dy.GoIOhDevice)
-                error('*** Cannot connect to sensor.');
+                error('*** Cannot connect to sensor %d.',sensor_num);
             end
             
             %recupere l'identification du capteur
@@ -327,97 +350,139 @@ classdef dynamometer < handle
         
         
         
-        function dy = open(dy)
+        function dy = open(dys,sensor_num)
             
-            try
-                dy.close ;
-                dy.load_library ;
-                dy.init_GoIO ;
-                dy.connect_sensor ;     
-            catch e
-                dy.disconnect_sensor ;
-                dy.uninit_GoIO;
-                dy.unload_library;
-                rethrow(e) ;
+            if ~exist('sensor_num','var')
+                sensor_num = 1;
             end
             
-            % TODO: lock device
-            
-            dy.switch_led('green')  
-            dy.working = true;
-        end
-        
-        
-        function dy=close(dy)
-            try dy.switch_led('orange'); end
-            % closing the sensor
-            try calllib('GoIO_DLL','GoIO_Sensor_Close',dy.GoIOhDevice); end
-            % unitialize the GoIO
-            try calllib('GoIO_DLL','GoIO_Uninit'); end
-            % unload the DLL
-            try unloadlibrary('GoIO_DLL'); end
-            
-            dy.working = false;
-        end
-        
-        function dy = dynamometer(frequency)    
-            if nargin > 0
-                dy.frequency = max(min(frequency,dy.frequency),1);
-            end   
-            dy = dy.open();
-        end
-        
-        function start(dy)
-            if ~dy.working
-                error('*** Cannot start recording (sensor not initialized)');
-            end
-            if dy.recording
-                fprintf('Already recording...\n');
-            else
-                dy.buffer = [];
-                dy.buffer_t = 0;
-                % clear buffer
-                calllib('GoIO_DLL','GoIO_Sensor_ClearIO', dy.GoIOhDevice);
-                % start recording
-                calllib('GoIO_DLL','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_START_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
-                dy.recording = true;
-                dy.switch_led('red');
-            end
-        end
-        
-        function values = get_buffer(dy)
-            values = dy.buffer(1:dy.buffer_t);
-        end
-        
-        function results = stop(dy)
-            if dy.recording
-                calllib('GoIO_DLL','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_STOP_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
-                dy.recording = false;
+            for iD = 1:numel(dys)
+                dy=dys(iD);
+                
+                % try
+                %dy.close ;
+                if dy.count_dyn == 0
+                    dy.load_library ;
+                    dy.init_GoIO ;
+                end
+                dy.connect_sensor(sensor_num) ;
+                %             catch e
+                %                 dy.disconnect_sensor ;
+                %                 dy.uninit_GoIO;
+                %                 dy.unload_library;
+                %                 rethrow(e) ;
+                %             end
+                
+                % TODO: lock device
+                
                 dy.switch_led('green');
-                results = dy.get_buffer;
-            else
-                fprintf('Already stopped\n');
+                dy.working = true;
+                dy.count_dyn('add');
+                sensor_num = sensor_num + 1;
             end
         end
         
-        function value = read(dy)
-            % read device
-            MAX_NUM_MEASUREMENTS = 10*dy.frequency; % 10s buffer
-            persistent rawMeasurements ;
-            if isempty(rawMeasurements)
-                %buffer size, need to be preallocated, need to be a multiple of 6(?)
-                rawMeasurements=zeros(1,MAX_NUM_MEASUREMENTS,'int32');
+        
+        function dy=close(dys)
+            
+            for iD = 1:numel(dys)
+                dy=dys(iD);
+                
+                try dy.switch_led('orange'); end
+                % closing the sensor
+                try calllib('GoIO_DLL','GoIO_Sensor_Close',dy.GoIOhDevice); end
+                
+                dy.count_dyn('rem');
+                dy.working = false;
+                
+                % clean up if last dyn
+                if   dy.count_dyn() == 0
+                    
+                    % unitialize the GoIO
+                    try calllib('GoIO_DLL','GoIO_Uninit'); end
+                    
+                    % unload the DLL
+                    try unloadlibrary('GoIO_DLL'); end
+                end
             end
-            [numMeasurements, ~, rawMeasurements] = calllib('GoIO_DLL','GoIO_Sensor_ReadRawMeasurements', dy.GoIOhDevice, rawMeasurements, MAX_NUM_MEASUREMENTS);
-            % convert values in Newtons
-            for t=1:numMeasurements
-                volts = calllib('GoIO_DLL','GoIO_Sensor_ConvertToVoltage', dy.GoIOhDevice, rawMeasurements(t)) ;
-                measure = calllib('GoIO_DLL','GoIO_Sensor_CalibrateData', dy.GoIOhDevice, volts);
-                dy.buffer_t = dy.buffer_t + 1 ;
-                dy.buffer(dy.buffer_t) = measure ;
+        end
+        
+        function dy = dynamometer(sensor_num)
+            if ~exist('sensor_num','var')
+                sensor_num = dy.count_dyn()+1;
+            end
+            dy = dy.open(sensor_num);
+        end
+        
+        function t=start(dys)
+            
+            for iD = 1:numel(dys)
+                dy=dys(iD);
+                
+                if ~dy.working
+                    error('*** Cannot start recording (sensor not initialized)');
+                end
+                if dy.recording
+                    fprintf('Already recording...\n');
+                else
+                    
+                    dy.buffer = [];
+                    dy.buffer_t = 0;
+                    % clear buffer
+                    calllib('GoIO_DLL','GoIO_Sensor_ClearIO', dy.GoIOhDevice);
+                    % start recording
+                    calllib('GoIO_DLL','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_START_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
+                    t(iD)=tic();
+                    dy.recording = true;
+                    dy.switch_led('red');
+                end
             end
             
-            value = dy.buffer(dy.buffer_t);
+        end
+        
+        function values = get_buffer(dys)
+            for iD = 1:numel(dys)
+                dy=dys(iD);
+                values{iD} = dy.buffer(1:dy.buffer_t);
+            end
+        end
+        
+        function  stop(dys)
+            for iD = 1:numel(dys)
+                dy=dys(iD);
+                if dy.recording
+                    dy.read();
+                    calllib('GoIO_DLL','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_STOP_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
+                    dy.recording = false;
+                    dy.switch_led('green');
+                else
+                    fprintf('Already stopped\n');
+                end
+            end
+        end
+        
+        function value = read(dys)
+            for iD = 1:numel(dys)
+                dy=dys(iD);
+                % read device
+                MAX_NUM_MEASUREMENTS = 10*dy.frequency; % 10s buffer
+                %persistent rawMeasurements ;
+                %if isempty(rawMeasurements)
+                    %buffer size, need to be preallocated, need to be a multiple of 6(?)
+                    rawMeasurements=zeros(1,MAX_NUM_MEASUREMENTS,'int32');
+                %end
+                [numMeasurements, ~, rawMeasurements] = calllib('GoIO_DLL','GoIO_Sensor_ReadRawMeasurements', dy.GoIOhDevice, rawMeasurements, MAX_NUM_MEASUREMENTS);
+                % convert values in Newtons
+                for t=1:numMeasurements
+                    volts = calllib('GoIO_DLL','GoIO_Sensor_ConvertToVoltage', dy.GoIOhDevice, rawMeasurements(t)) ;
+                    measure = calllib('GoIO_DLL','GoIO_Sensor_CalibrateData', dy.GoIOhDevice, volts);
+                    dy.buffer_t = dy.buffer_t + 1 ;
+                    dy.buffer(dy.buffer_t) = measure ;
+                end
+                
+                value(iD) = dy.buffer(dy.buffer_t);
+                
+            end
             
         end
         
