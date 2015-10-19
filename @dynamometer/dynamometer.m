@@ -415,7 +415,7 @@ classdef dynamometer < handle
         end
         
         function t=start(dys)
-            
+            chrono = tic;
             for iD = 1:numel(dys)
                 dy=dys(iD);
                 
@@ -428,11 +428,11 @@ classdef dynamometer < handle
                     
                     dy.buffer = [];
                     dy.buffer_t = 0;
-                    % clear buffer
-                    calllib('GoIO_DLL','GoIO_Sensor_ClearIO', dy.GoIOhDevice);
                     % start recording
                     calllib('GoIO_DLL','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_START_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
-                    t(iD)=tic();
+                    % clear buffer
+                    calllib('GoIO_DLL','GoIO_Sensor_ClearIO', dy.GoIOhDevice);
+                    t(iD)=toc(chrono);
                     dy.recording = true;
                     dy.switch_led('red');
                 end
@@ -441,18 +441,24 @@ classdef dynamometer < handle
         end
         
         function values = get_buffer(dys)
-            for iD = 1:numel(dys)
-                dy=dys(iD);
-                values{iD} = dy.buffer(1:dy.buffer_t);
+            if numel(dys) == 1
+                values = dys.buffer(1:dys.buffer_t);
+            else
+                for iD = 1:numel(dys)
+                    dy=dys(iD);
+                    values{iD} = dy.buffer(1:dy.buffer_t);
+                end
             end
         end
         
-        function  stop(dys)
+        function  t=stop(dys)
+            chrono = tic;
             for iD = 1:numel(dys)
                 dy=dys(iD);
                 if dy.recording
                     dy.read();
                     calllib('GoIO_DLL','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_STOP_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
+                    t(iD)=toc(chrono);
                     dy.recording = false;
                     dy.switch_led('green');
                 else
