@@ -32,7 +32,6 @@ end
 % alternative use: d.stop; timeseries = d.get_buffer ;
 d.stop; 
 timeseries = d.get_buffer;
-timeseries = timeseries{1};
 
 % plot at full resolution (200Hz)
 plot((0:numel(timeseries)-1)/200,timeseries,'k') ; 
