@@ -243,7 +243,7 @@ classdef dynamometer < handle
         % -----------------------------------------------------------------
         function load_library (dy)
             
-            dy.GoIO_Init();
+            dy.GoIO_Init()
            
             warning off MATLAB:loadlibrary:TypeNotFoundForStructure
             if ~ libisloaded ('GoIO')
@@ -375,10 +375,10 @@ classdef dynamometer < handle
                 
                 % try
                 %dy.close ;
-                if dy.count_dyn == 0
+                %if dy.count_dyn == 0
                     dy.load_library ;
                     dy.init_GoIO ;
-                end
+                %end
                 dy.connect_sensor(sensor_num) ;
                 %             catch e
                 %                 dy.disconnect_sensor ;
