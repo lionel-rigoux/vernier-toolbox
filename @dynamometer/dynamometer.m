@@ -20,46 +20,46 @@ classdef dynamometer < handle
         
         VERNIER_DEFAULT_VENDOR_ID  = hex2dec('08F7');
         
-        LABPRO_DEFAULT_PRODUCT_ID = hex2dec('0001');
-        USB_DIRECT_TEMP_DEFAULT_PRODUCT_ID = hex2dec('0002');	%aka GoTemp
+%         LABPRO_DEFAULT_PRODUCT_ID = hex2dec('0001');
+%         USB_DIRECT_TEMP_DEFAULT_PRODUCT_ID = hex2dec('0002');	%aka GoTemp
         SKIP_DEFAULT_PRODUCT_ID = hex2dec('0003');				%aka GoLink
-        CYCLOPS_DEFAULT_PRODUCT_ID = hex2dec('0004');			%aka GoMotion
-        NGI_DEFAULT_PRODUCT_ID = hex2dec('0005');				%aka LabQuest
-        LOWCOST_SPEC_DEFAULT_PRODUCT_ID = hex2dec('0006');		%aka SpectroVis
-        MINI_GC_DEFAULT_PRODUCT_ID = hex2dec('0007');			%aka Vernier Mini Gas Chromatograph
-        STANDALONE_DAQ_DEFAULT_PRODUCT_ID = hex2dec('0008');	%aka LabQuest Mini
-        LOWCOST_SPEC2_DEFAULT_PRODUCT_ID = hex2dec('0009');		%aka SpectroVis Plus
-        
-        
-        LABQUEST_DEFAULT_PRODUCT_ID = hex2dec('0005'); %NGI_DEFAULT_PRODUCT_ID;
-        LABQUEST_MINI_PRODUCT_ID = hex2dec('0008');%STANDALONE_DAQ_DEFAULT_PRODUCT_ID;
-        MINIGC_DEFAULT_PRODUCT_ID = hex2dec('0007');%MINI_GC_DEFAULT_PRODUCT_ID;
-        
-        %// @brief What we thought was the unique Ohaus Scout Pro VID/PID is actually the FTDI generic VID/PID, which is also used by Watt's Up devices. This throws a big doo-doo in how we go about identifying and enumerating new devices on the bus.
-        %// @see "GFTDIDevice.h"
-        FTDI_GENERIC_VENDOR_ID  = hex2dec('0403');
-        FTDI_GENERIC_PRODUCT_ID = hex2dec('6001');
-        
-        OCEAN_OPTICS_DEFAULT_VENDOR_ID  = hex2dec('2457');
-        OCEAN_OPTICS_DEFAULT_PRODUCT_ID = hex2dec('1002');	% USB2000
-        OCEAN_OPTICS_USB325_PRODUCT_ID  = hex2dec('1024');
-        OCEAN_OPTICS_USB650_PRODUCT_ID  = hex2dec('1014');
-        OCEAN_OPTICS_USB2000_PRODUCT_ID = hex2dec('1002');
-        OCEAN_OPTICS_HR4000_PRODUCT_ID  = hex2dec('1012');
-        OCEAN_OPTICS_USB4000_PRODUCT_ID = hex2dec('1022');
-        
-        %// FIX THIS!
-        NATIONAL_INSTRUMENTS_DEFAULT_VENDOR_ID  = hex2dec('3923');
-        SENSORDAQ_DEFAULT_PRODUCT_ID = hex2dec('72CC');
+%         CYCLOPS_DEFAULT_PRODUCT_ID = hex2dec('0004');			%aka GoMotion
+%         NGI_DEFAULT_PRODUCT_ID = hex2dec('0005');				%aka LabQuest
+%         LOWCOST_SPEC_DEFAULT_PRODUCT_ID = hex2dec('0006');		%aka SpectroVis
+%         MINI_GC_DEFAULT_PRODUCT_ID = hex2dec('0007');			%aka Vernier Mini Gas Chromatograph
+%         STANDALONE_DAQ_DEFAULT_PRODUCT_ID = hex2dec('0008');	%aka LabQuest Mini
+%         LOWCOST_SPEC2_DEFAULT_PRODUCT_ID = hex2dec('0009');		%aka SpectroVis Plus
+%         
+%         
+%         LABQUEST_DEFAULT_PRODUCT_ID = hex2dec('0005'); %NGI_DEFAULT_PRODUCT_ID;
+%         LABQUEST_MINI_PRODUCT_ID = hex2dec('0008');%STANDALONE_DAQ_DEFAULT_PRODUCT_ID;
+%         MINIGC_DEFAULT_PRODUCT_ID = hex2dec('0007');%MINI_GC_DEFAULT_PRODUCT_ID;
+%         
+%         %// @brief What we thought was the unique Ohaus Scout Pro VID/PID is actually the FTDI generic VID/PID, which is also used by Watt's Up devices. This throws a big doo-doo in how we go about identifying and enumerating new devices on the bus.
+%         %// @see "GFTDIDevice.h"
+%         FTDI_GENERIC_VENDOR_ID  = hex2dec('0403');
+%         FTDI_GENERIC_PRODUCT_ID = hex2dec('6001');
+%         
+%         OCEAN_OPTICS_DEFAULT_VENDOR_ID  = hex2dec('2457');
+%         OCEAN_OPTICS_DEFAULT_PRODUCT_ID = hex2dec('1002');	% USB2000
+%         OCEAN_OPTICS_USB325_PRODUCT_ID  = hex2dec('1024');
+%         OCEAN_OPTICS_USB650_PRODUCT_ID  = hex2dec('1014');
+%         OCEAN_OPTICS_USB2000_PRODUCT_ID = hex2dec('1002');
+%         OCEAN_OPTICS_HR4000_PRODUCT_ID  = hex2dec('1012');
+%         OCEAN_OPTICS_USB4000_PRODUCT_ID = hex2dec('1022');
+%         
+%         %// FIX THIS!
+%         NATIONAL_INSTRUMENTS_DEFAULT_VENDOR_ID  = hex2dec('3923');
+%         SENSORDAQ_DEFAULT_PRODUCT_ID = hex2dec('72CC');
         
         
         %*******************************
-        % Constants from "GoIO_DLL_interface.h"
+        % Constants from "GoIO_interface.h"
         %*******************************
         GOIO_MAX_SIZE_DEVICE_NAME = ismac*255 + (~ismac)*260;
         SKIP_TIMEOUT_MS_DEFAULT = 2000;
-        SKIP_TIMEOUT_MS_READ_DDSMEMBLOCK = 2000;
-        SKIP_TIMEOUT_MS_WRITE_DDSMEMBLOCK = 4000;
+%         SKIP_TIMEOUT_MS_READ_DDSMEMBLOCK = 2000;
+%         SKIP_TIMEOUT_MS_WRITE_DDSMEMBLOCK = 4000;
         
         
         %*******************************
@@ -204,7 +204,8 @@ classdef dynamometer < handle
     %% ====================================================================
     % Static methods
     %  ====================================================================
-    methods (Access = public, Hidden = false, Static=true)
+    methods (Access = public, Hidden = false, Static = true)
+         
         function num_devices=count_dyn(action)
             persistent number_devices ;
             if isempty(number_devices)
@@ -225,38 +226,51 @@ classdef dynamometer < handle
     end
     
     %% ====================================================================
+    % GoIO interface
+    %  ====================================================================
+
+     methods (Access = private, Hidden = true)
+        
+        GoIO_Init(dy);
+     end  
+        
+    %% ====================================================================
     % Private methods
     %  ====================================================================
     methods (Access = private, Hidden = true)
-        
-        
+                
         % load the dynamic library
         % -----------------------------------------------------------------
-        function load_library(dy)
+        function load_library (dy)
+            
+            dy.GoIO_Init();
+           
             warning off MATLAB:loadlibrary:TypeNotFoundForStructure
-            if not(libisloaded('GoIO_DLL'))
+            if ~ libisloaded ('GoIO')
                 % add 'GSkipCommExt' to access structures definition
-                loadlibrary('GoIO_DLL','GoIO_DLL_interface.h','addheader','GSkipCommExt');
+                loadlibrary('GoIO','GoIO.h','addheader','GSkipCommExt');
+                [nf, w] = loadlibrary('GoIO','GoIO.h','addheader','GSensorDDSMem','addheader','GSkipCommExt','addheader','GVernierUSB')
+
             end
         end
         
         % unload the dynamic library
         % -----------------------------------------------------------------
         function unload_library(dy)
-            if libisloaded('GoIO_DLL')
-                unloadlibrary('GoIO_DLL');
+            if libisloaded('GoIO')
+                unloadlibrary('GoIO');
             end
         end
         
         % init the GoIO library
         % -----------------------------------------------------------------
         function init_GoIO(dy)
-            retValue = calllib('GoIO_DLL','GoIO_Init');
+            retValue = calllib('GoIO','GoIO_Init');
             if retValue ~= dy.SKIP_STATUS_SUCCESS
                 error('*** Could not initialise the GoIO library.');
             else
                 %Version de la DLL
-                [~, MajorVersion, MinorVersion] = calllib('GoIO_DLL','GoIO_GetDLLVersion',0,0);
+                [~, MajorVersion, MinorVersion] = calllib('GoIO','GoIO_GetDLLVersion',0,0);
                 fprintf('GoIO lib version %d.%d loaded.\n', MajorVersion, MinorVersion);
             end
         end
@@ -264,7 +278,7 @@ classdef dynamometer < handle
         % uninit the GoIO library
         % -----------------------------------------------------------------
         function uninit_GoIO(dy)
-            try calllib('GoIO_DLL','GoIO_Uninit'); end
+            try calllib('GoIO','GoIO_Uninit'); end
         end
         
         % connect to the sensor
@@ -272,7 +286,7 @@ classdef dynamometer < handle
         function connect_sensor(dy,sensor_num)
             
             % find device name
-            GoIOnumSkips = calllib('GoIO_DLL','GoIO_UpdateListOfAvailableDevices', ...
+            GoIOnumSkips = calllib('GoIO','GoIO_UpdateListOfAvailableDevices', ...
                 dy.VERNIER_DEFAULT_VENDOR_ID, dy.SKIP_DEFAULT_PRODUCT_ID);
             if GoIOnumSkips < sensor_num
                 error('*** No GoLink connected!');
@@ -281,7 +295,7 @@ classdef dynamometer < handle
             
             
             % get the identifier
-            [retValue, GoIOdeviceName] = calllib('GoIO_DLL','GoIO_GetNthAvailableDeviceName', ...
+            [retValue, GoIOdeviceName] = calllib('GoIO','GoIO_GetNthAvailableDeviceName', ...
                 blanks(dy.GOIO_MAX_SIZE_DEVICE_NAME), dy.GOIO_MAX_SIZE_DEVICE_NAME, ...
                 dy.VERNIER_DEFAULT_VENDOR_ID, dy.SKIP_DEFAULT_PRODUCT_ID, ...
                 sensor_num-1); % <- the last paramter is the device number
@@ -291,21 +305,21 @@ classdef dynamometer < handle
             
             % open the device
             
-            [dy.GoIOhDevice] = calllib('GoIO_DLL','GoIO_Sensor_Open',GoIOdeviceName, ...
+            [dy.GoIOhDevice] = calllib('GoIO','GoIO_Sensor_Open',GoIOdeviceName, ...
                 dy.VERNIER_DEFAULT_VENDOR_ID, dy.SKIP_DEFAULT_PRODUCT_ID, 0);
             if isNull(dy.GoIOhDevice)
                 error('*** Cannot connect to sensor %d.',sensor_num);
             end
             
             %recupere l'identification du capteur
-            [retValue, ~, GoIOsensorId]=calllib('GoIO_DLL','GoIO_Sensor_DDSMem_GetSensorNumber', dy.GoIOhDevice,0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
-            [retValue, ~, GoIOsensorName] = calllib('GoIO_DLL','GoIO_Sensor_DDSMem_GetLongName', dy.GoIOhDevice, blanks(100), 100);
+            [retValue, ~, GoIOsensorId]=calllib('GoIO','GoIO_Sensor_DDSMem_GetSensorNumber', dy.GoIOhDevice,0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
+            [retValue, ~, GoIOsensorName] = calllib('GoIO','GoIO_Sensor_DDSMem_GetLongName', dy.GoIOhDevice, blanks(100), 100);
             if isempty(GoIOsensorName)
                 error('*** Cannot connect to sensor.');
             end
             fprintf('Found a ''%s'' sensor (%d).\n', GoIOsensorName,GoIOsensorId);
             
-            calllib('GoIO_DLL','GoIO_Sensor_SetMeasurementPeriod', dy.GoIOhDevice, 1/dy.frequency, dy.SKIP_TIMEOUT_MS_DEFAULT); %5 milliseconds measurement period.
+            calllib('GoIO','GoIO_Sensor_SetMeasurementPeriod', dy.GoIOhDevice, 1/dy.frequency, dy.SKIP_TIMEOUT_MS_DEFAULT); %5 milliseconds measurement period.
             fprintf('Sampling rate set to %dHz.\n',dy.frequency);
             
         end
@@ -314,7 +328,7 @@ classdef dynamometer < handle
         % disconnect to the sensor
         % -----------------------------------------------------------------
         function disconnect_sensor(dy)
-            try calllib('GoIO_DLL','GoIO_Sensor_Close',dy.GoIOhDevice); end
+            try calllib('GoIO','GoIO_Sensor_Close',dy.GoIOhDevice); end
             dy.GoIOhDevice=libpointer('doublePtr',[]);
         end
         
@@ -332,7 +346,7 @@ classdef dynamometer < handle
                     ledParameters = struct('color', dy.kLEDOrange, 'brightness', dy.kSkipOrangeLedBrightness);
             end
             ledParametersPtr=libpointer('GSkipSetLedStateParams',ledParameters); % requires GSkipCommExt
-            calllib('GoIO_DLL','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_SET_LED_STATE, ledParametersPtr, 2, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
+            calllib('GoIO','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_SET_LED_STATE, ledParametersPtr, 2, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
             clear ledParametersPtr; %requis pour pouvoir faire le unloadlibrary (ne peux pas quitter si structures encore en mem)
             
         end
@@ -390,7 +404,7 @@ classdef dynamometer < handle
                 
                 try dy.switch_led('orange'); end
                 % closing the sensor
-                try calllib('GoIO_DLL','GoIO_Sensor_Close',dy.GoIOhDevice); end
+                try calllib('GoIO','GoIO_Sensor_Close',dy.GoIOhDevice); end
                 
                 dy.count_dyn('rem');
                 dy.working = false;
@@ -399,10 +413,10 @@ classdef dynamometer < handle
                 if   dy.count_dyn() == 0
                     
                     % unitialize the GoIO
-                    try calllib('GoIO_DLL','GoIO_Uninit'); end
+                    try calllib('GoIO','GoIO_Uninit'); end
                     
                     % unload the DLL
-                    try unloadlibrary('GoIO_DLL'); end
+                    try unloadlibrary('GoIO'); end
                 end
             end
         end
@@ -429,9 +443,9 @@ classdef dynamometer < handle
                     dy.buffer = [];
                     dy.buffer_t = 0;
                     % start recording
-                    calllib('GoIO_DLL','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_START_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
+                    calllib('GoIO','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_START_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
                     % clear buffer
-                    calllib('GoIO_DLL','GoIO_Sensor_ClearIO', dy.GoIOhDevice);
+                    calllib('GoIO','GoIO_Sensor_ClearIO', dy.GoIOhDevice);
                     t(iD)=toc(chrono);
                     dy.recording = true;
                     dy.switch_led('red');
@@ -457,7 +471,7 @@ classdef dynamometer < handle
                 dy=dys(iD);
                 if dy.recording
                     dy.read();
-                    calllib('GoIO_DLL','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_STOP_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
+                    calllib('GoIO','GoIO_Sensor_SendCmdAndGetResponse', dy.GoIOhDevice, dy.SKIP_CMD_ID_STOP_MEASUREMENTS, 0, 0, 0, 0, dy.SKIP_TIMEOUT_MS_DEFAULT);
                     t(iD)=toc(chrono);
                     dy.recording = false;
                     dy.switch_led('green');
@@ -477,11 +491,11 @@ classdef dynamometer < handle
                     %buffer size, need to be preallocated, need to be a multiple of 6(?)
                     rawMeasurements=zeros(1,MAX_NUM_MEASUREMENTS,'int32');
                 %end
-                [numMeasurements, ~, rawMeasurements] = calllib('GoIO_DLL','GoIO_Sensor_ReadRawMeasurements', dy.GoIOhDevice, rawMeasurements, MAX_NUM_MEASUREMENTS);
+                [numMeasurements, ~, rawMeasurements] = calllib('GoIO','GoIO_Sensor_ReadRawMeasurements', dy.GoIOhDevice, rawMeasurements, MAX_NUM_MEASUREMENTS);
                 % convert values in Newtons
                 for t=1:numMeasurements
-                    volts = calllib('GoIO_DLL','GoIO_Sensor_ConvertToVoltage', dy.GoIOhDevice, rawMeasurements(t)) ;
-                    measure = calllib('GoIO_DLL','GoIO_Sensor_CalibrateData', dy.GoIOhDevice, volts);
+                    volts = calllib('GoIO','GoIO_Sensor_ConvertToVoltage', dy.GoIOhDevice, rawMeasurements(t)) ;
+                    measure = calllib('GoIO','GoIO_Sensor_CalibrateData', dy.GoIOhDevice, volts);
                     dy.buffer_t = dy.buffer_t + 1 ;
                     dy.buffer(dy.buffer_t) = measure ;
                 end
