@@ -13,7 +13,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   //GOIO_SENSOR_HANDLE hDevice = ivp.thepointer;
 
   gtype_int64 *pHandle = (gtype_int64 *) mxGetData(prhs[1]);
-  GOIO_SENSOR_HANDLE hDevice = *pHandle;
+  GOIO_SENSOR_HANDLE hDevice = (GOIO_SENSOR_HANDLE) *pHandle;
 
 
   int ret = GoIO_Sensor_Close(hDevice);

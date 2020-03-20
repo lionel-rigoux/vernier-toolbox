@@ -16,7 +16,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   // Note that GoIO_GetNthAvailableDeviceName will fail if this is not called first
   /* ------------------------------------------------------------------------ */
   int GoIOnumSkips = GoIO_UpdateListOfAvailableDevices(VERNIER_DEFAULT_VENDOR_ID, SKIP_DEFAULT_PRODUCT_ID);
-  mexPrintf("%d devices found\n",GoIOnumSkips);
   if (sensorNum >= GoIOnumSkips) {
     mexErrMsgTxt("GoIO.Open: sensor number too large, not enough devices available.");
   }
@@ -49,7 +48,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   /* ------------------------------------------------------------------------ */
   plhs[0] = mxCreateNumericMatrix(1,1,mxINT64_CLASS,mxREAL);
   gtype_int64 *ip = (gtype_int64 *) mxGetData(plhs[0]);
-  *ip = hDevice;
+  *ip = (gtype_int64) hDevice;
 
   return;
 }
