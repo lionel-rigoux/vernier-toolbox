@@ -6,10 +6,9 @@
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 
-  union {long long theinteger; void *thepointer;} ivp;
-  long long *ip = (long long *) mxGetData(prhs[0]);
-  ivp.theinteger = *ip;
-  GOIO_SENSOR_HANDLE hDevice = ivp.thepointer;
+  gtype_int64 *pHandle = (gtype_int64 *) mxGetData(prhs[1]);
+  GOIO_SENSOR_HANDLE hDevice = *pHandle;
+
 
   /* Try to init  */
   /* ======================================================================== */

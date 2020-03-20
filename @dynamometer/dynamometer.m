@@ -229,9 +229,16 @@ classdef dynamometer < handle
     % GoIO interface
     %  ====================================================================
 
-     methods (Access = private, Hidden = true)
+     methods (Access = public, Hidden = false)
         
-        GoIO_Init(dy);
+        GoIO_Init (dy);
+        GoIO_Uninit (dy);
+        h = GoIO_Open (dy, sensor_num);
+        GoIO_Close (dy, h);
+        GoIO_Start (dy, h);
+        GoIO_Stop (dy, h);
+        values = GoIO_Read (dy, h);
+        GoIO_SwitchLED (dy, h, color);
      end  
         
     %% ====================================================================
@@ -422,6 +429,8 @@ classdef dynamometer < handle
         end
         
         function dy = dynamometer(sensor_num)
+            
+            return
             if ~exist('sensor_num','var')
                 sensor_num = dy.count_dyn()+1;
             end

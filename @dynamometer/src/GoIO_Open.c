@@ -6,38 +6,49 @@
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+  // get which device needs to be open
+  int sensorNum = (int) mxGetScalar(prhs[0]);
+  if (sensorNum < 0) {
+    mexErrMsgTxt("GoIO.Open: sensor number must be a positive integer.");
+  }
 
-  int sensor_num = (int) mxGetScalar(prhs[0]);
+  // Count how many devices are available.
+  // Note that GoIO_GetNthAvailableDeviceName will fail if this is not called first
+  /* ------------------------------------------------------------------------ */
+  int GoIOnumSkips = GoIO_UpdateListOfAvailableDevices(VERNIER_DEFAULT_VENDOR_ID, SKIP_DEFAULT_PRODUCT_ID);
+  mexPrintf("%d devices found\n",GoIOnumSkips);
+  if (sensorNum >= GoIOnumSkips) {
+    mexErrMsgTxt("GoIO.Open: sensor number too large, not enough devices available.");
+  }
 
-  // get the identifier
+  // Get the device identifier in the syste,
+  /* ------------------------------------------------------------------------ */
   char deviceName[GOIO_MAX_SIZE_DEVICE_NAME];
-  int retValue = GoIO_GetNthAvailableDeviceName(deviceName, GOIO_MAX_SIZE_DEVICE_NAME, VERNIER_DEFAULT_VENDOR_ID, SKIP_DEFAULT_PRODUCT_ID, sensor_num);
-
+  int retValue = GoIO_GetNthAvailableDeviceName(deviceName, GOIO_MAX_SIZE_DEVICE_NAME, VERNIER_DEFAULT_VENDOR_ID, SKIP_DEFAULT_PRODUCT_ID, sensorNum);
   if (retValue < 0) {
-    plhs[0] = mxCreateDoubleScalar(-1);
-    return;
+    mexErrMsgTxt("GoIO.Open: cannot find device identifier in the system.");
   }
 
-  // open the device and get the handle
+  // Open the device and get the device handle
+  /* ------------------------------------------------------------------------ */
   GOIO_SENSOR_HANDLE hDevice = GoIO_Sensor_Open(deviceName, VERNIER_DEFAULT_VENDOR_ID, SKIP_DEFAULT_PRODUCT_ID, 0);
-  if (hDevice == NULL)
-  {
-    plhs[0] = mxCreateDoubleScalar(-2);
-    return;
+  if (hDevice == NULL) {
+    mexErrMsgTxt("GoIO.Open: cannot find device identifier in the system.");
   }
 
-  int frequency = 200;
-  int retValue2 = GoIO_Sensor_SetMeasurementPeriod(hDevice, 1/frequency, SKIP_TIMEOUT_MS_DEFAULT);
+  // Set recording frequency to 200Hz
+  /* ------------------------------------------------------------------------ */
+  gtype_real64 period = 1/200;
+  int retValue2 = GoIO_Sensor_SetMeasurementPeriod(hDevice, period, SKIP_TIMEOUT_MS_DEFAULT);
   if (retValue2 < 0) {
-    plhs[0] = mxCreateDoubleScalar(-3);
-    return;
+    mexErrMsgTxt("GoIO.Open: cannot set device recording frequency.");
   }
-  // store
-  plhs[0] = mxCreateNumericMatrix(1,1,mxINT64_CLASS,mxREAL);
-  mxSetData(plhs[0], &hDevice);
 
-  plhs[1] = mxCreateNumericMatrix(1,1,mxINT64_CLASS,mxREAL);
-  long long *ip = (long long *) mxGetData(plhs[1]);
+  // Return device handle
+  // This is a a void* that we recast as int64 so it can be stored in Matlab
+  /* ------------------------------------------------------------------------ */
+  plhs[0] = mxCreateNumericMatrix(1,1,mxINT64_CLASS,mxREAL);
+  gtype_int64 *ip = (gtype_int64 *) mxGetData(plhs[0]);
   *ip = hDevice;
 
   return;

@@ -1,17 +1,13 @@
 #include "mex.h"
 #include "lib/libGoIO.h"
 
-
+/* Unnitialise the GoIO suite  */
+/* ======================================================================== */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-
-  /* Try to init  */
-  /* ======================================================================== */
   int ret = GoIO_Uninit();
-
-  /* store in output argument */
-  /* ======================================================================== */
-  plhs[0] = mxCreateDoubleScalar(ret);
-
+  if (ret != 0) {
+    mexErrMsgTxt("GoIO.Uninit: Could not uninitialise the library.");
+  }
   return;
 }
