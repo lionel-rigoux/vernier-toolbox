@@ -8,13 +8,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   // Get the device handle
   /* ------------------------------------------------------------------------ */
-  gtype_int64 *pHandle = (gtype_int64 *) mxGetData(prhs[1]);
+  gtype_int64 *pHandle = (gtype_int64 *) mxGetData(prhs[0]);
   GOIO_SENSOR_HANDLE hDevice = (GOIO_SENSOR_HANDLE) *pHandle;
 
   // Get the required color
   /* ------------------------------------------------------------------------ */
   char color;
-  color = *mxGetChars(prhs[2]);
+  color = *mxGetChars(prhs[1]);
 
   // Create option structure to send the instruction to the device
   /* ------------------------------------------------------------------------ */
@@ -38,6 +38,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   if (retValue < 0) {
     mexErrMsgTxt("GoIO.SwitchLED: cannot change the LED settings.");
   }
-  
+
   return;
 }

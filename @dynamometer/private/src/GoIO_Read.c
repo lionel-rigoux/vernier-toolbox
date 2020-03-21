@@ -10,7 +10,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   // Get the device handle
   /* ------------------------------------------------------------------------ */
-  gtype_int64 *pHandle = (gtype_int64 *) mxGetData(prhs[1]);
+  gtype_int64 *pHandle = (gtype_int64 *) mxGetData(prhs[0]);
   GOIO_SENSOR_HANDLE hDevice = (GOIO_SENSOR_HANDLE) *pHandle;
 
   // Allocate memory for storing the values
