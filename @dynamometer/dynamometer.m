@@ -6,7 +6,7 @@ classdef dynamometer < handle
     end
     
     properties (SetAccess = private, GetAccess = private, Hidden = true)
-        GoIOhDevice; % handle to the sensor
+        GoIOhDevice = NaN; % handle to the sensor
         buffer; % buffer of measurements
     end
     
@@ -45,8 +45,10 @@ classdef dynamometer < handle
         end
         
         function dy = close (dy)
-            GoIO_SwitchLED (dy.GoIOhDevice, 'O');
-            GoIO_Close (dy.GoIOhDevice);
+            if ~ isnan(dy.GoIOhDevice)
+                GoIO_SwitchLED (dy.GoIOhDevice, 'O');
+                GoIO_Close (dy.GoIOhDevice);
+            end
         end
         
     end
