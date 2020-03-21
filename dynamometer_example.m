@@ -37,5 +37,5 @@ timeseries = d.get_buffer;
 plot((0:numel(timeseries)-1)/200,timeseries,'k') ; 
 
 % cleaning
-d.close
+clear d
 
