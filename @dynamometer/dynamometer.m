@@ -1,54 +1,48 @@
 classdef dynamometer < handle
     
     properties (SetAccess = private)
-        sensorNumber;
+        deviceNumber; % identifier of the device
         recording = false; % is the sensor recording
     end
     
     properties (SetAccess = private, GetAccess = private, Hidden = true)
-        GoIOhDevice = NaN; % handle to the sensor
-        buffer; % buffer of measurements
+        GoIOhDevice = NaN; % GoIO handle to the sensor
+        buffer; % internal buffer of measurements
     end
     
     %% ====================================================================
     % Static methods
     %  ====================================================================
     methods (Access = public, Hidden = false, Static = true)
-        
-        function num_devices = count_dyn (action)
-            persistent number_devices ;
-            if isempty (number_devices)
-                number_devices = 0;
+ 
+        % List devices that are alread open
+        % -------------------------------------------------------------
+        function list = list_open_devices (action, sensorNumber)
+            % Persistent list of open devices
+            % `````````````````````````````````````````````````````````````
+            persistent deviceList;
+            if isempty (deviceList)
+                deviceList = [];
             end
-            
-            if exist ('action')
+            % Add or remove a device from the list, if requested
+            % `````````````````````````````````````````````````````````````
+            if exist ('action','var')
                 switch action
                     case 'add'
-                        number_devices = number_devices + 1;
+                        deviceList = union (deviceList, sensorNumber);
                     case 'remove'
-                        number_devices = number_devices - 1;
+                        deviceList = setdiff(deviceList, sensorNumber);
                 end
             end
-            num_devices = number_devices;
+            % Return list
+            % `````````````````````````````````````````````````````````````
+            list = deviceList;
         end
         
-    end
-    
-    %% ====================================================================
-    % Private methods
-    %  ====================================================================
-    methods (Access = private, Hidden = true)
-        
-        function dy = open (dy, sensorNumber)
-            dy.GoIOhDevice = GoIO_Open (sensorNumber - 1);
-            GoIO_SwitchLED (dy.GoIOhDevice, 'G');
-        end
-        
-        function dy = close (dy)
-            if ~ isnan(dy.GoIOhDevice)
-                GoIO_SwitchLED (dy.GoIOhDevice, 'O');
-                GoIO_Close (dy.GoIOhDevice);
-            end
+        % List devices that could be open
+        % -------------------------------------------------------------
+        function list = list_available_devices ()
+            list = setdiff (1 : GoIO_CountDevices(), dynamometer.list_open_devices());
         end
         
     end
@@ -58,60 +52,143 @@ classdef dynamometer < handle
     %% ====================================================================
     methods
         
-        function dy = dynamometer (sensorNumber)
-            if ~ exist ('sensor_num', 'var')
-                sensorNumber = 1;
-            end
-            dy.sensorNumber = sensorNumber;
-
-            if dy.count_dyn () == 0
+        % Creator.
+        % -------------------------------------------------------------
+        function dy = dynamometer (deviceNumberList)
+          % If no devices open yet, initialise the GoIO library
+            % `````````````````````````````````````````````````````````````
+            if isempty (dynamometer.list_open_devices ())
                 GoIO_Init ();
             end
-            dy = dy.open (dy.sensorNumber);
-            dy.count_dyn ('add');
+            % by default, open all available devices
+            % `````````````````````````````````````````````````````````````
+            if nargin == 0
+                deviceNumberList = dynamometer.list_available_devices ();
+            end
+            if isempty (deviceNumberList)
+                error('*** dynamometer: no devices available.');
+            end
+            % deal with multiple devices
+            % `````````````````````````````````````````````````````````````
+            if numel (deviceNumberList) > 1
+                dy = arrayfun (@(deviceNumber) dynamometer(deviceNumber), deviceNumberList);
+                return;
+            end
+            % Store device identifier
+            % `````````````````````````````````````````````````````````````
+            dy.deviceNumber = deviceNumberList;
+            % check that we are not trying to reopen an existing device
+            % `````````````````````````````````````````````````````````````
+            if ismember (dy.deviceNumber, dynamometer.list_open_devices())
+                error('*** dynamometer: device %d is already in use.', dy.deviceNumber);
+            end
+            % Add device to internal list
+            % `````````````````````````````````````````````````````````````
+            dynamometer.list_open_devices ('add', dy.deviceNumber);
+            % Open device, store handle and switch LED
+            % `````````````````````````````````````````````````````````````
+            % mex starts counting devices from 0
+            dy.GoIOhDevice = GoIO_Open (dy.deviceNumber - 1); 
+            GoIO_SwitchLED (dy.GoIOhDevice, 'G');
         end
         
-        function delete(dy)
-            dy.close ();
-            dy.count_dyn ('remove');
-            
-            if dy.count_dyn () == 0
-                GoIO_Uninit ();
+        % Destructor.
+        % -------------------------------------------------------------
+        function delete (dys)
+            % Deal with multiple devices
+            % `````````````````````````````````````````````````````````````
+            for dy = dys
+                % Close device
+                % `````````````````````````````````````````````````````````````
+                % handle might not be set if opening failed
+                if ~ isnan(dy.GoIOhDevice) 
+                    GoIO_SwitchLED (dy.GoIOhDevice, 'O');
+                    GoIO_Close (dy.GoIOhDevice);
+                end  
+                % Remove from list of open devices
+                % ````````````````````````````````````````````````````````````` 
+                dy.list_open_devices ('remove', dy.deviceNumber);   
+                % If last device, uninitialise the GoIO library
+                % ````````````````````````````````````````````````````````````` 
+                if isempty (dynamometer.list_open_devices ())
+                    GoIO_Uninit ();
+                end
             end
         end
 
-        function start (dy)
-
-            if dy.recording
-                error ('*** Cannot start recording (sensor already started)');
+        % Start recording.
+        % -------------------------------------------------------------
+        function start (dys)
+            % Deal with multiple devices
+            % `````````````````````````````````````````````````````````````
+            for dy = dys
+                % Cannot start an already recording device
+                % `````````````````````````````````````````````````````````````
+                if dy.recording
+                    error ('*** Cannot start recording (sensor already started)');
+                end
+                % Reset internal buffer
+                % `````````````````````````````````````````````````````````````
+                dy.buffer = [];
+                % Start recording
+                % `````````````````````````````````````````````````````````````
+                GoIO_Start (dy.GoIOhDevice);
+                GoIO_SwitchLED (dy.GoIOhDevice, 'R');
+                dy.recording = true;
             end
-            
-            dy.buffer = [];
-            % start recording
-            GoIO_Start (dy.GoIOhDevice);
-            GoIO_SwitchLED (dy.GoIOhDevice, 'R');
-            dy.recording = true;
         end
-        
-        function values = get_buffer (dy)
-            values = dy.buffer;
-        end
-        
-        function  stop (dy)
-            if dy.recording
+ 
+        % Stop recording.
+        % -------------------------------------------------------------
+        function  stop (dys)
+            % Deal with multiple devices
+            % `````````````````````````````````````````````````````````````
+            for dy = dys
+                % Cannot stop an already stopped device
+                % `````````````````````````````````````````````````````````````
+                if ~dy.recording
+                	error('*** Cannot stop recording (sensor already stopped)');
+                end
+                % Get last measurments before stopping
+                % `````````````````````````````````````````````````````````````
                 dy.read ();
+                % Stop device
+                % `````````````````````````````````````````````````````````````
                 GoIO_Stop (dy.GoIOhDevice);
                 GoIO_SwitchLED (dy.GoIOhDevice, 'G');
-                dy.recording = false;
-            else
-                error('*** Cannot stop recording (sensor already stopped)');
+                dy.recording = false; 
             end
         end
+       
+        % Get measurements frmo Go!Link buffer.
+        % -------------------------------------------------------------        
+        function value = read (dys)
+            % Deal with multiple devices
+            % `````````````````````````````````````````````````````````````
+            if numel(dys) > 1
+                value = arrayfun (@(dy) dy.read (), dys);
+                return;
+            end
+            % Concatenate new measurement to internal buffer
+            % `````````````````````````````````````````````````````````````
+            dys.buffer = [dys.buffer GoIO_Read(dys.GoIOhDevice)] ;
+            % Return most recent value
+            % `````````````````````````````````````````````````````````````
+            value = dys.buffer (end);
+        end
         
-        function value = read (dy)
-            dy.buffer = [dy.buffer GoIO_Read(dy.GoIOhDevice)] ;
-            value = dy.buffer (end);
-        end   
+        % Return internal buffer
+        % -------------------------------------------------------------        
+        function buffer = get_buffer (dys)
+            % Deal with multiple devices
+            % `````````````````````````````````````````````````````````````
+            if numel(dys) > 1
+                buffer = arrayfun (@(dy) dy.get_buffer (), dys, 'UniformOutput', false);
+                return;
+            end
+            buffer = dys.buffer;
+        end
+
     end
     
 end
