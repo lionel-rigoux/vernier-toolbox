@@ -3,6 +3,7 @@ classdef dynamometer < handle
     properties (SetAccess = private)
         deviceNumber; % identifier of the device
         recording = false; % is the sensor recording
+        baseline = 0;
     end
     
     properties (SetAccess = private, GetAccess = private, Hidden = true)
@@ -90,6 +91,9 @@ classdef dynamometer < handle
             % mex starts counting devices from 0
             dy.GoIOhDevice = GoIO_Open (dy.deviceNumber - 1); 
             GoIO_SwitchLED (dy.GoIOhDevice, 'G');
+            % Calibrate device
+            % `````````````````````````````````````````````````````````````
+            dy.calibrate ();
         end
         
         % Destructor.
@@ -171,7 +175,10 @@ classdef dynamometer < handle
             end
             % Concatenate new measurement to internal buffer
             % `````````````````````````````````````````````````````````````
-            dys.buffer = [dys.buffer GoIO_Read(dys.GoIOhDevice)] ;
+            dys.buffer =  cat (2, ...
+                    dys.buffer, ...
+                    GoIO_Read(dys.GoIOhDevice) - dys.baseline ...
+                );
             % Return most recent value
             % `````````````````````````````````````````````````````````````
             value = dys.buffer (end);
@@ -187,6 +194,24 @@ classdef dynamometer < handle
                 return;
             end
             buffer = dys.buffer;
+        end
+        
+        % Calibration
+        % -------------------------------------------------------------        
+        function calibrate (dys, duration)
+            if nargin < 2
+                duration = 0.100;
+            end
+            % Do a short recording
+            % `````````````````````````````````````````````````````````````
+            dys.start ();
+            pause (duration);
+            dys.stop ();
+            % Deal with multiple devices
+            % `````````````````````````````````````````````````````````````
+            for dy = dys
+                dy.baseline = mean (dy.get_buffer ());
+            end
         end
 
     end
