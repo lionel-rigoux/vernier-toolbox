@@ -34,7 +34,9 @@ Useful functions are:
     > stop recording and return the whole recorded data since `dyn.start`
 - `dyn.get_buffer`
     > return the whole recorded data since `dyn.start`
-
+- `dyn.calibrate`
+    > optional reset of the baseline. This done automatically when the dynamometer is created.
+    
 ## System
 
 This code has been tested on Mac OS X, Windows 10, and Ubuntu 18.04, but should work on older 64bits systems.
