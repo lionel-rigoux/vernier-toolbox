@@ -10,7 +10,7 @@ dt = 0.05 ; % display refresh lag
 % display
 figure; hold on;
 xlim([0 T])
-ylim([0 700])
+ylim([-5 700])
 
 % create dynamometer object
 d=dynamometer;
@@ -37,5 +37,5 @@ timeseries = d.get_buffer;
 plot((0:numel(timeseries)-1)/200,timeseries,'k') ; 
 
 % cleaning
-d.close
+clear d
 
