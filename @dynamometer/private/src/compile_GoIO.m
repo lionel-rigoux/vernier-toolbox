@@ -13,7 +13,7 @@ for iFile = 1 : numel (cFiles)
         % while calling mex (how?)... Here, we simply correct the path
         % after compilation
         if ismac()
-            system (sprintf ('install_name_tool -change libGoIO.dylib @dynamometer/private/libGoIO.dylib ../%s.mexmaci64',fName));
+            system (sprintf ('install_name_tool -change libGoIO.dylib @loader_path/libGoIO.dylib ../%s.mexmaci64',fName));
         else
             system (sprintf ('patchelf --replace-needed libGoIO.so.2 @dynamometer/private/libGoIO.so ../%s.mexa64',fName));
         end
