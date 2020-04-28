@@ -14,5 +14,9 @@ RUN aptitude install -y libtool
 RUN aptitude install -y libusb-1.0-0-dev
 RUN aptitude install -y uuid-dev
 
-WORKDIR /data
-VOLUME ["/data"]
+ADD GoIO_SDK/src /GoIO_SDK/
+WORKDIR /GoIO_SDK
+
+RUN ./build.sh
+
+CMD cp /usr/lib/libGoIO.so /opt/mount/
