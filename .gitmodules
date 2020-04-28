@@ -1,0 +1,2 @@
+[submodule "vernier-SDK/GoIO_SDK"]
+	url = https://github.com/lionel-rigoux/GoIO_SDK.git
