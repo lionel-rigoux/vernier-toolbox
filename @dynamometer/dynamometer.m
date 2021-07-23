@@ -134,11 +134,16 @@ classdef dynamometer < handle
                 % Reset internal buffer
                 % `````````````````````````````````````````````````````````````
                 dy.buffer = [];
-                % Start recording
+                % Start device
                 % `````````````````````````````````````````````````````````````
-                GoIO_Start (dy.GoIOhDevice);
-                GoIO_SwitchLED (dy.GoIOhDevice, 'R');
                 dy.recording = true;
+                GoIO_SwitchLED (dy.GoIOhDevice, 'R');
+                GoIO_Start (dy.GoIOhDevice);
+                % Ensure we receive data before moving on
+                % `````````````````````````````````````````````````````````````
+                while isempty (dy.buffer)
+                    dy.buffer = GoIO_Read(dy.GoIOhDevice) - dys.baseline;
+                end
             end
         end
  
