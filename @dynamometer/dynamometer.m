@@ -207,14 +207,18 @@ classdef dynamometer < handle
             if nargin < 2
                 duration = 0.100;
             end
-            % Do a short recording
-            % `````````````````````````````````````````````````````````````
-            dys.start ();
-            pause (duration);
-            dys.stop ();
-            % Deal with multiple devices
-            % `````````````````````````````````````````````````````````````
+            
             for dy = dys
+                % Start from unbiased reads
+                % `````````````````````````````````````````````````````````````
+                dy.baseline = 0;
+                % Do a short recording
+                % `````````````````````````````````````````````````````````````
+                dy.start ();
+                pause (duration);
+                dy.stop ();
+                % set baseline
+                % `````````````````````````````````````````````````````````````
                 dy.baseline = mean (dy.get_buffer ());
             end
         end
