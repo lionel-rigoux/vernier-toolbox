@@ -18,6 +18,16 @@ As root:
 - Edit this file to add the line: `SUBSYSTEM=="usb", ATTRS{idVendor}=="08f7", ATTRS{idProduct}=="0003", MODE="0666"`
 - Restart the computer or run `sudo udevadm control --reload`
 
+Another common issue comes from conflicting USB drivers (eg. USB Abstract Control Model) that can disconnect the device after a successfull initialization. A solution is to simply blacklist the incriminated driver, although this might have other side effects...
+
+- As root, edit `/etc/modprobe.d/blacklist.conf`
+- Add instruction to blacklist the conflicting driver:
+  ```
+   #MicroChip
+   blacklist cdc_acm
+   ```
+- Restart the computer
+  
 ## How to use
 
 Have a look to `dynamometer_example.m` for a minimal working script.
