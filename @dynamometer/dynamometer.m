@@ -134,11 +134,16 @@ classdef dynamometer < handle
                 % Reset internal buffer
                 % `````````````````````````````````````````````````````````````
                 dy.buffer = [];
-                % Start recording
+                % Start device
                 % `````````````````````````````````````````````````````````````
-                GoIO_Start (dy.GoIOhDevice);
-                GoIO_SwitchLED (dy.GoIOhDevice, 'R');
                 dy.recording = true;
+                GoIO_SwitchLED (dy.GoIOhDevice, 'R');
+                GoIO_Start (dy.GoIOhDevice);
+                % Ensure we receive data before moving on
+                % `````````````````````````````````````````````````````````````
+                while isempty (dy.buffer)
+                    dy.buffer = GoIO_Read(dy.GoIOhDevice) - dys.baseline;
+                end
             end
         end
  
@@ -202,14 +207,18 @@ classdef dynamometer < handle
             if nargin < 2
                 duration = 0.100;
             end
-            % Do a short recording
-            % `````````````````````````````````````````````````````````````
-            dys.start ();
-            pause (duration);
-            dys.stop ();
-            % Deal with multiple devices
-            % `````````````````````````````````````````````````````````````
+            
             for dy = dys
+                % Start from unbiased reads
+                % `````````````````````````````````````````````````````````````
+                dy.baseline = 0;
+                % Do a short recording
+                % `````````````````````````````````````````````````````````````
+                dy.start ();
+                pause (duration);
+                dy.stop ();
+                % set baseline
+                % `````````````````````````````````````````````````````````````
                 dy.baseline = mean (dy.get_buffer ());
             end
         end

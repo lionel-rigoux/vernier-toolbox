@@ -27,7 +27,6 @@ for i = 1 : round (T / dt)
 end
 
 % stop recording and get the buffer
-% alternative use: d.stop; timeseries = d.get_buffer ;
 d.stop; 
 timeseries = d.get_buffer;
 
